@@ -9,6 +9,8 @@ body {
   /* Google Fontsの読み込み */
   font-family: "Darumadrop One", cursive;
   font-family: "M PLUS Rounded 1c", sans-serif;
+
+  color: #333;
 }
 
 code {
