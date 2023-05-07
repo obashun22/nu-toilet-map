@@ -17,7 +17,7 @@ import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
 import { TOILET_EXAMPLE_LIST, NU } from "../constants/examples";
 import { FormDialog } from "../organisms/FormDialog";
 import { PostToilet } from "../types/toilet";
-import { useNavigate } from "react-router-dom";
+import { ApiClient } from "../api/apiClient";
 
 const options = {
   styles: [
@@ -68,6 +68,8 @@ export const Map = memo(() => {
   const [selectedMarker, setSelectedMarker] = useState<number | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
   const [postData, setPostData] = useState(initPostData);
+
+  const apiClient = new ApiClient();
 
   const handleMarkerClick = (
     id: number,
@@ -130,8 +132,19 @@ export const Map = memo(() => {
         break;
     }
   };
+  const uploadImages = async (images: File[]) => {
+    await postData.images.forEach(async (image) => {
+      await apiClient.postImage(image);
+    });
+  };
   const handleFormSubmit = () => {
     // 投稿処理
+    uploadImages(postData.images).then(() => {
+      apiClient.postToilet(postData).then(() => {
+        handlePostModeExit();
+        setIsFormOpen(false);
+      });
+    });
     console.log("Form submission", postData);
     setIsFormOpen(false);
     setMode("NORMAL");
