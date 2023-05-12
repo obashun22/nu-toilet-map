@@ -6,7 +6,7 @@ export const NU = {
 };
 
 export const TOILET_EXAMPLE: Toilet = {
-  id: 1,
+  id: "1",
   name: "IB館南棟1階正面玄関トイレ",
   position: {
     lat: 35.1540423,
@@ -27,12 +27,13 @@ export const TOILET_EXAMPLE: Toilet = {
   },
   comment:
     "ここのトイレは清潔で、設備も充実している。アクセスも良く、混雑具合も少ない。ただ、トイレットペーパーがないことがあるので、持参した方が良い。基本的には、ここを使うことが多い。 ぜひ、使ってみてください。そういえば、ここのトイレは、男女兼用なので、女性の方は、男性が入っていることがあるので、注意してください。",
+  createdAt: new Date(),
 };
 
 export const TOILET_EXAMPLE_LIST = [
   {
     ...TOILET_EXAMPLE,
-    id: 1,
+    id: "1",
     position: {
       lat: NU.lat + Math.random() / 1000,
       lng: NU.lng + Math.random() / 1000,
@@ -40,7 +41,7 @@ export const TOILET_EXAMPLE_LIST = [
   },
   {
     ...TOILET_EXAMPLE,
-    id: 2,
+    id: "2",
     position: {
       lat: NU.lat + Math.random() / 1000,
       lng: NU.lng + Math.random() / 1000,
@@ -48,7 +49,7 @@ export const TOILET_EXAMPLE_LIST = [
   },
   {
     ...TOILET_EXAMPLE,
-    id: 3,
+    id: "3",
     position: {
       lat: NU.lat + Math.random() / 1000,
       lng: NU.lng + Math.random() / 1000,
@@ -56,7 +57,7 @@ export const TOILET_EXAMPLE_LIST = [
   },
   {
     ...TOILET_EXAMPLE,
-    id: 4,
+    id: "4",
     position: {
       lat: NU.lat + Math.random() / 1000,
       lng: NU.lng + Math.random() / 1000,
@@ -64,7 +65,7 @@ export const TOILET_EXAMPLE_LIST = [
   },
   {
     ...TOILET_EXAMPLE,
-    id: 5,
+    id: "5",
     position: {
       lat: NU.lat + Math.random() / 1000,
       lng: NU.lng + Math.random() / 1000,
@@ -72,7 +73,7 @@ export const TOILET_EXAMPLE_LIST = [
   },
   {
     ...TOILET_EXAMPLE,
-    id: 6,
+    id: "6",
     position: {
       lat: NU.lat + Math.random() / 1000,
       lng: NU.lng + Math.random() / 1000,

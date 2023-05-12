@@ -2,6 +2,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import {
+  Backdrop,
   Rating,
   Snackbar,
   SpeedDial,
@@ -10,14 +11,17 @@ import {
   TableCell,
   TableRow,
   Typography,
+  CircularProgress,
+  Modal,
 } from "@mui/material";
 import { GoogleMap, InfoWindowF, MarkerF } from "@react-google-maps/api";
-import React, { memo, useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import PlaceRoundedIcon from "@mui/icons-material/PlaceRounded";
-import { TOILET_EXAMPLE_LIST, NU } from "../constants/examples";
+import { NU } from "../constants/examples";
 import { FormDialog } from "../organisms/FormDialog";
-import { PostToilet } from "../types/toilet";
+import { PostToilet, Toilet } from "../types/toilet";
 import { ApiClient } from "../api/apiClient";
+import { NO_IMAGE, UNKNOWN_TOILET_NAME } from "../constants/default";
 
 const options = {
   styles: [
@@ -65,14 +69,32 @@ const initPostData: PostToilet = {
 export const Map = memo(() => {
   const [mode, setMode] = useState<"NORMAL" | "POST">("NORMAL");
   const [center, setCenter] = useState(NU);
-  const [selectedMarker, setSelectedMarker] = useState<number | null>(null);
+  const [selectedMarker, setSelectedMarker] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [postImages, setPostImages] = useState<File[]>([]);
   const [postData, setPostData] = useState(initPostData);
+  const [toilets, setToilets] = useState<Toilet[]>([]);
+  const [modalImage, setModalImage] = useState("");
 
   const apiClient = new ApiClient();
 
+  useEffect(() => {
+    reloadToilets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const reloadToilets = () => {
+    apiClient.getToiletList().then((fetchedToilets) => {
+      setToilets(
+        fetchedToilets.sort((TA, TB) => (TA.createdAt > TB.createdAt ? -1 : 1))
+      );
+      // console.log("fetchedToilets", fetchedToilets);
+    });
+  };
+
   const handleMarkerClick = (
-    id: number,
+    id: string,
     position: { lat: number; lng: number }
   ) => {
     setSelectedMarker(id);
@@ -85,6 +107,8 @@ export const Map = memo(() => {
   const handlePostModeExit = () => {
     setMode("NORMAL");
     setPostData(initPostData);
+    setPostImages([]);
+    reloadToilets();
   };
   const handleFormMapChange = (e: google.maps.MapMouseEvent) => {
     setPostData({
@@ -101,12 +125,9 @@ export const Map = memo(() => {
   const handleFormChange = (e: any) => {
     switch (e.target.name) {
       case "images":
-        setPostData({
-          ...postData,
-          [e.target.name]: e.target.files
-            ? [...Array.from(e.target.files)]
-            : [],
-        });
+        setPostImages(
+          e.target.files ? ([...Array.from(e.target.files)] as File[]) : []
+        );
         break;
       case "name":
       case "comment":
@@ -132,23 +153,41 @@ export const Map = memo(() => {
         break;
     }
   };
+
   const uploadImages = async (images: File[]) => {
-    await postData.images.forEach(async (image) => {
-      await apiClient.postImage(image);
-    });
+    const urlList: string[] = [];
+    await Promise.all(
+      images.map(async (image) => {
+        const imageUrl = await apiClient.postImage(image);
+        urlList.push(imageUrl);
+      })
+    );
+    console.log("urlList", urlList);
+    return urlList;
   };
+
   const handleFormSubmit = () => {
     // 投稿処理
-    uploadImages(postData.images).then(() => {
-      apiClient.postToilet(postData).then(() => {
-        handlePostModeExit();
-        setIsFormOpen(false);
-      });
+    setLoading(true);
+    uploadImages(postImages).then((urlList) => {
+      const newPostData: PostToilet = {
+        ...postData,
+        images: urlList,
+      };
+      apiClient
+        .postToilet(newPostData)
+        .then(() => {
+          setIsFormOpen(false);
+          handlePostModeExit();
+          console.log("Form submited", postData);
+        })
+        .catch((e) => {
+          console.log(e);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     });
-    console.log("Form submission", postData);
-    setIsFormOpen(false);
-    setMode("NORMAL");
-    setPostData(initPostData);
   };
 
   return (
@@ -166,8 +205,9 @@ export const Map = memo(() => {
             }}
             onClick={() => handleInfoWindowClose()}
           >
-            {TOILET_EXAMPLE_LIST.map((toilet) => (
+            {toilets.map((toilet) => (
               <MarkerF
+                key={toilet.id}
                 position={toilet.position}
                 animation={google.maps.Animation.DROP}
                 onClick={() => handleMarkerClick(toilet.id, toilet.position)}
@@ -181,6 +221,7 @@ export const Map = memo(() => {
                       style={{
                         width: 250,
                         height: 350,
+                        overflowX: "visible",
                       }}
                     >
                       <div
@@ -191,11 +232,25 @@ export const Map = memo(() => {
                           overflowX: "scroll",
                         }}
                       >
-                        {toilet.images.map((image) => (
+                        {toilet.images.length ? (
+                          toilet.images.map((image) => (
+                            <img
+                              key={image}
+                              src={image}
+                              alt={image}
+                              height={110}
+                              width={110}
+                              style={{
+                                borderRadius: 3,
+                                objectFit: "cover",
+                              }}
+                              onClick={() => setModalImage(image)}
+                            />
+                          ))
+                        ) : (
                           <img
-                            key={image}
-                            src={image}
-                            alt={image}
+                            src={NO_IMAGE}
+                            alt="default"
                             height={110}
                             width={110}
                             style={{
@@ -203,7 +258,7 @@ export const Map = memo(() => {
                               objectFit: "cover",
                             }}
                           />
-                        ))}
+                        )}
                       </div>
                       <h3
                         style={{
@@ -217,7 +272,7 @@ export const Map = memo(() => {
                             verticalAlign: "-4px",
                           }}
                         />
-                        {toilet.name}
+                        {toilet.name || UNKNOWN_TOILET_NAME}
                       </h3>
                       <Table size="small">
                         <TableBody>
@@ -243,7 +298,7 @@ export const Map = memo(() => {
                           />
                         </TableBody>
                       </Table>
-                      <Typography sx={{ my: 2, fontSize: 13 }}>
+                      <Typography sx={{ my: 2, fontSize: 14 }}>
                         {toilet.comment}
                       </Typography>
                       {/* <div
@@ -276,6 +331,25 @@ export const Map = memo(() => {
             icon={<EditIcon />}
             onClick={() => setMode("POST")}
           />
+          <Modal
+            open={modalImage ? true : false}
+            onClose={() => setModalImage("")}
+          >
+            <img
+              src={modalImage}
+              alt="modal"
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: "100%",
+                maxWidth: "85vw",
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
+          </Modal>
         </>
       ) : (
         <>
@@ -302,18 +376,19 @@ export const Map = memo(() => {
           </GoogleMap>
           <SpeedDial
             ariaLabel="Cancel"
-            sx={{ position: "fixed", bottom: 76, right: 92 }}
+            sx={{ position: "fixed", bottom: 76, right: 92, zIndex: 1000 }}
             icon={<CloseIcon />}
             onClick={() => handlePostModeExit()}
           />
           <SpeedDial
             ariaLabel="Check"
-            sx={{ position: "fixed", bottom: 76, right: 16 }}
+            sx={{ position: "fixed", bottom: 76, right: 16, zIndex: 1000 }}
             icon={<CheckIcon />}
             onClick={() => setIsFormOpen(true)}
           />
           <FormDialog
             open={isFormOpen}
+            postImages={postImages}
             postData={postData}
             onFormChange={handleFormChange}
             onCancel={handleFormClose}
@@ -321,6 +396,9 @@ export const Map = memo(() => {
           />
         </>
       )}
+      <Backdrop sx={{ color: "#fff", zIndex: 10002 }} open={loading}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 });

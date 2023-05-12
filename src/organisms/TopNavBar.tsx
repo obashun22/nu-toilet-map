@@ -1,6 +1,5 @@
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import MapRoundedIcon from "@mui/icons-material/MapRounded";
-import React from "react";
 
 export const TopNavBar = () => {
   return (

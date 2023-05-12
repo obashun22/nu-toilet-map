@@ -7,28 +7,42 @@ import {
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import { useNavigate } from "react-router-dom";
-import { TOILET_EXAMPLE_LIST } from "../constants/examples";
+import { useEffect, useState } from "react";
+import { ApiClient } from "../api/apiClient";
+import { Toilet } from "../types/toilet";
+import { NO_IMAGE } from "../constants/default";
+
+const apiClient = new ApiClient();
 
 export const Posts = () => {
+  const [toilets, setToilets] = useState<Toilet[]>([]);
   const navigate = useNavigate();
+  useEffect(() => {
+    apiClient.getToiletList().then((fetchedToilets) => {
+      setToilets(
+        fetchedToilets.sort((TA, TB) => (TA.createdAt > TB.createdAt ? -1 : 1))
+      );
+    });
+  }, []);
   return (
     <Container maxWidth="sm" sx={{ mb: 8, px: 0 }}>
       <ImageList sx={{ m: "5px auto" }}>
-        {TOILET_EXAMPLE_LIST.map((toilet) => (
+        {toilets.map((toilet) => (
           <ImageListItem
             key={toilet.id}
             sx={{ cursor: "pointer" }}
             onClick={() => {
-              navigate(`/posts/${12}`);
+              navigate(`/posts/${toilet.id}`);
             }}
           >
             <img
-              src={toilet.images[0]}
+              src={toilet.images[0] ?? NO_IMAGE}
               alt={toilet.name}
+              style={{ height: 150 }}
               // loading="lazy"
             />
             <ImageListItemBar
-              title={toilet.name}
+              title={toilet.name || "名もなきトイレ"}
               subtitle={
                 <Rating
                   name="average"

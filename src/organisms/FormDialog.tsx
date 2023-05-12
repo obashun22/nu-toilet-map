@@ -12,22 +12,24 @@ import {
   TableBody,
   Rating,
 } from "@mui/material";
-import React from "react";
+import React, { memo } from "react";
 import { PostToilet } from "../types/toilet";
 
 type Props = {
   open: boolean;
+  postImages: File[];
   postData: PostToilet;
   onFormChange: (e: any) => void;
   onCancel: () => void;
   onSubmit: () => void;
 };
 
-export const FormDialog: React.VFC<Props> = (props) => {
-  const { open, postData, onFormChange, onCancel, onSubmit } = props;
+export const FormDialog: React.VFC<Props> = memo((props) => {
+  const { open, postImages, postData, onFormChange, onCancel, onSubmit } =
+    props;
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} sx={{ zIndex: 1001 }}>
       <DialogTitle>投稿</DialogTitle>
       <DialogContent>
         <DialogContentText>
@@ -56,19 +58,7 @@ export const FormDialog: React.VFC<Props> = (props) => {
             marginTop: 8,
           }}
         >
-          {postData.images.map((image, index) => (
-            <img
-              key={index}
-              src={URL.createObjectURL(image)}
-              alt="Toilet"
-              height={110}
-              width={110}
-              style={{
-                borderRadius: 3,
-                objectFit: "cover",
-              }}
-            />
-          ))}
+          <ImageList images={postImages} />
         </div>
         <Button variant="contained" component="label" sx={{ mt: 1 }}>
           画像を選択
@@ -171,4 +161,29 @@ export const FormDialog: React.VFC<Props> = (props) => {
       </DialogActions>
     </Dialog>
   );
+});
+
+type ImageListProps = {
+  images: File[];
 };
+
+const ImageList: React.VFC<ImageListProps> = memo((props) => {
+  const { images } = props;
+  return (
+    <>
+      {images.map((image, index) => (
+        <img
+          key={index}
+          src={URL.createObjectURL(image)}
+          alt="Toilet"
+          height={110}
+          width={110}
+          style={{
+            borderRadius: 3,
+            objectFit: "cover",
+          }}
+        />
+      ))}
+    </>
+  );
+});
