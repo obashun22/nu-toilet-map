@@ -197,7 +197,7 @@ export const Map = memo(() => {
           <GoogleMap
             mapContainerStyle={mapStyle}
             center={center}
-            zoom={17}
+            zoom={16}
             clickableIcons={false}
             options={{
               disableDefaultUI: true,
